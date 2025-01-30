@@ -17,6 +17,7 @@ type Config struct {
 	log      *logrus.Logger
 	db       DBConfig
 	auth     AuthConfig
+	redis    RedisConfig
 }
 
 type DBConfig struct {
@@ -30,6 +31,10 @@ type AuthConfig struct {
 	secret string
 	iss    string
 	aud    string
+}
+
+type RedisConfig struct {
+	addr string
 }
 
 func (a *Application) Mount() *fiber.App {
