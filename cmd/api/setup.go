@@ -2,10 +2,13 @@ package api
 
 import (
 	"context"
+
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/env"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/logger"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/pg"
+	"github.com/ArdiSasongko/Ecommerce-product/internal/config/rd"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/handler"
+	"github.com/ArdiSasongko/Ecommerce-product/internal/storage/cache"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -32,6 +35,9 @@ func LoadConfig() (Config, error) {
 			iss:    env.GetEnvString("JWT_ISS", ""),
 			aud:    env.GetEnvString("JWT_AUD", ""),
 		},
+		redis: RedisConfig{
+			addr: env.GetEnvString("REDIS_ADDR", ""),
+		},
 	}
 
 	return config, nil
@@ -57,10 +63,15 @@ func SetupHTTPApplication() (*Application, error) {
 		cfg.log.Fatalf("%s", err.Error())
 	}
 
-	// _, err = ConnDatabase(cfg.db, cfg.log)
-	// if err != nil {
-	// 	cfg.log.Fatalf("failed to connected database :%v", err)
-	// }
+	_, err = ConnDatabase(cfg.db, cfg.log)
+	if err != nil {
+		cfg.log.Fatalf("failed to connected database :%v", err)
+	}
+
+	// connected redis
+	rd := rd.NewRedis(cfg.redis.addr)
+	redis := cache.NewRedisCache(rd)
+	cfg.log.Info(redis)
 
 	//auth := auth.NewJWT(cfg.auth.secret, cfg.auth.aud, cfg.auth.iss)
 	handler := handler.NewHandler()
