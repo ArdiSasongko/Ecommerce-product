@@ -42,6 +42,13 @@ func (a *Application) Mount() *fiber.App {
 
 	r.Get("/health", a.handler.Health.Check)
 
+	v1 := r.Group("/v1")
+
+	product := v1.Group("/product")
+	product.Post("/", a.handler.Middleware.AdminMiddleware(2), a.handler.Product.CreateProduct)
+
+	category := v1.Group("/category")
+	category.Post("/", a.handler.Middleware.AdminMiddleware(2), a.handler.Category.CreateCategory)
 	return r
 }
 

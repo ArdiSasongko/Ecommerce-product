@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 
+	"github.com/ArdiSasongko/Ecommerce-product/internal/config/auth"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/env"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/logger"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/pg"
@@ -63,7 +64,7 @@ func SetupHTTPApplication() (*Application, error) {
 		cfg.log.Fatalf("%s", err.Error())
 	}
 
-	_, err = ConnDatabase(cfg.db, cfg.log)
+	Conn, err := ConnDatabase(cfg.db, cfg.log)
 	if err != nil {
 		cfg.log.Fatalf("failed to connected database :%v", err)
 	}
@@ -73,8 +74,8 @@ func SetupHTTPApplication() (*Application, error) {
 	redis := cache.NewRedisCache(rd)
 	cfg.log.Info(redis)
 
-	//auth := auth.NewJWT(cfg.auth.secret, cfg.auth.aud, cfg.auth.iss)
-	handler := handler.NewHandler()
+	auth := auth.NewJWT(cfg.auth.secret, cfg.auth.aud, cfg.auth.iss)
+	handler := handler.NewHandler(Conn, auth)
 	return &Application{
 		config:  cfg,
 		handler: handler,
