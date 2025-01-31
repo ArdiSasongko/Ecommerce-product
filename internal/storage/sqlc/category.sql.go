@@ -43,3 +43,19 @@ func (q *Queries) GetCategory(ctx context.Context, name string) (GetCategoryRow,
 	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
+
+const updateCategory = `-- name: UpdateCategory :one
+UPDATE categories SET name = $1 WHERE name = $2 RETURNING name
+`
+
+type UpdateCategoryParams struct {
+	Name   string
+	Name_2 string
+}
+
+func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (string, error) {
+	row := q.db.QueryRow(ctx, updateCategory, arg.Name, arg.Name_2)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}

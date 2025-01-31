@@ -13,6 +13,8 @@ import (
 type Service struct {
 	Product interface {
 		CreateProduct(context.Context, *model.ProductPayload) error
+		UpdateProduct(context.Context, *model.ProductUpdatePayload) (*model.ProductUpdateResponse, error)
+		UpdateVariant(context.Context, *model.VariantsUpdatePayload) (*model.VariantUpdateResponse, error)
 	}
 	Category interface {
 		InsertCategory(context.Context, string) error

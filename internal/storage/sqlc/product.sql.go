@@ -11,6 +11,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getProduct = `-- name: GetProduct :one
+SELECT id, name, description, price, created_at, updated_at FROM products WHERE id = $1
+`
+
+func (q *Queries) GetProduct(ctx context.Context, id int32) (Product, error) {
+	row := q.db.QueryRow(ctx, getProduct, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const insertProduct = `-- name: InsertProduct :one
 INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING id
 `
@@ -26,4 +44,41 @@ func (q *Queries) InsertProduct(ctx context.Context, arg InsertProductParams) (i
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products SET name = $1, description = $2, price = $3, updated_at = NOW() WHERE id = $4 RETURNING id, name, description, price, updated_at
+`
+
+type UpdateProductParams struct {
+	Name        string
+	Description pgtype.Text
+	Price       pgtype.Numeric
+	ID          int32
+}
+
+type UpdateProductRow struct {
+	ID          int32
+	Name        string
+	Description pgtype.Text
+	Price       pgtype.Numeric
+	UpdatedAt   pgtype.Timestamp
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (UpdateProductRow, error) {
+	row := q.db.QueryRow(ctx, updateProduct,
+		arg.Name,
+		arg.Description,
+		arg.Price,
+		arg.ID,
+	)
+	var i UpdateProductRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

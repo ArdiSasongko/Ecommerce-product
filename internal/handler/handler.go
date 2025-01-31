@@ -14,6 +14,8 @@ type Handler struct {
 	}
 	Product interface {
 		CreateProduct(*fiber.Ctx) error
+		UpdateProduct(*fiber.Ctx) error
+		UpdateVariant(*fiber.Ctx) error
 	}
 	Category interface {
 		CreateCategory(*fiber.Ctx) error
