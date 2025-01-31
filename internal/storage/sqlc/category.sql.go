@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createCategory = `-- name: CreateCategory :one
@@ -26,6 +28,36 @@ DELETE FROM categories WHERE name = $1
 func (q *Queries) DeleteCategory(ctx context.Context, name string) error {
 	_, err := q.db.Exec(ctx, deleteCategory, name)
 	return err
+}
+
+const getCategories = `-- name: GetCategories :many
+SELECT id, name, created_at FROM categories
+`
+
+type GetCategoriesRow struct {
+	ID        int32
+	Name      string
+	CreatedAt pgtype.Timestamp
+}
+
+func (q *Queries) GetCategories(ctx context.Context) ([]GetCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, getCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCategoriesRow
+	for rows.Next() {
+		var i GetCategoriesRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getCategory = `-- name: GetCategory :one

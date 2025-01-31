@@ -101,3 +101,18 @@ func (h *CategoryHandler) DeleteCategory(ctx *fiber.Ctx) error {
 		"message": "ok",
 	})
 }
+
+func (h *CategoryHandler) GetCategories(ctx *fiber.Ctx) error {
+	resp, err := h.service.Category.GetCategory(ctx.Context())
+	if err != nil {
+		log.WithError(fiber.ErrInternalServerError).Error("error :%w", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "ok",
+		"data":    resp,
+	})
+}

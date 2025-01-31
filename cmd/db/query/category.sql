@@ -9,3 +9,6 @@ DELETE FROM categories WHERE name = $1;
 
 -- name: UpdateCategory :one
 UPDATE categories SET name = $1 WHERE name = $2 RETURNING name;
+
+-- name: GetCategories :many
+SELECT id, name, created_at FROM categories;

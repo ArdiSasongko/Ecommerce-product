@@ -10,13 +10,15 @@ import (
 var log = logger.NewLogger()
 
 func NewRedis(addr string) *redis.Client {
+
 	client := redis.NewClient(&redis.Options{
 		Addr: addr,
 	})
 
-	ping, err := client.Ping(context.Background()).Result()
+	ctx := context.Background()
+	ping, err := client.Ping(ctx).Result()
 	if err != nil {
-		log.Fatalf("failed to connected redis :%v", err)
+		log.Fatalf("failed to connect to redis: %v", err)
 	}
 
 	log.Info("PING redis: " + ping)

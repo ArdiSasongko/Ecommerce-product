@@ -51,7 +51,8 @@ func (a *Application) Mount() *fiber.App {
 	product.Patch("/:productID/variants/:variantID", a.handler.Product.UpdateVariant)
 	product.Delete("/:productID", a.handler.Product.DeleteProduct)
 
-	category := v1.Group("/category")
+	category := v1.Group("/categories")
+	category.Get("/", a.handler.Category.GetCategories)
 	category.Use(a.handler.Middleware.AdminMiddleware(2))
 	category.Post("/", a.handler.Category.CreateCategory)
 	category.Put("/:category_name", a.handler.Category.UpdateCategory)
