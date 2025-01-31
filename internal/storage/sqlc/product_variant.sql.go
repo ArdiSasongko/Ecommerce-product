@@ -7,7 +7,33 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const getVariantByID = `-- name: GetVariantByID :one
+SELECT id, product_id, color, size, quantity, created_at, updated_at FROM product_variants WHERE id = $1 AND product_id = $2
+`
+
+type GetVariantByIDParams struct {
+	ID        int32
+	ProductID int32
+}
+
+func (q *Queries) GetVariantByID(ctx context.Context, arg GetVariantByIDParams) (ProductVariant, error) {
+	row := q.db.QueryRow(ctx, getVariantByID, arg.ID, arg.ProductID)
+	var i ProductVariant
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Color,
+		&i.Size,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const insertProductVariant = `-- name: InsertProductVariant :one
 INSERT INTO product_variants (product_id, color, size, quantity) VALUES ($1, $2, $3, $4) RETURNING color, size, quantity
@@ -35,5 +61,42 @@ func (q *Queries) InsertProductVariant(ctx context.Context, arg InsertProductVar
 	)
 	var i InsertProductVariantRow
 	err := row.Scan(&i.Color, &i.Size, &i.Quantity)
+	return i, err
+}
+
+const updateProductVariant = `-- name: UpdateProductVariant :one
+UPDATE product_variants SET color = $1, size = $2, quantity = $3, updated_at = NOW() WHERE id = $4 AND product_id = $5 RETURNING color, size, quantity, updated_at
+`
+
+type UpdateProductVariantParams struct {
+	Color     string
+	Size      string
+	Quantity  int32
+	ID        int32
+	ProductID int32
+}
+
+type UpdateProductVariantRow struct {
+	Color     string
+	Size      string
+	Quantity  int32
+	UpdatedAt pgtype.Timestamp
+}
+
+func (q *Queries) UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (UpdateProductVariantRow, error) {
+	row := q.db.QueryRow(ctx, updateProductVariant,
+		arg.Color,
+		arg.Size,
+		arg.Quantity,
+		arg.ID,
+		arg.ProductID,
+	)
+	var i UpdateProductVariantRow
+	err := row.Scan(
+		&i.Color,
+		&i.Size,
+		&i.Quantity,
+		&i.UpdatedAt,
+	)
 	return i, err
 }

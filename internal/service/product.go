@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ArdiSasongko/Ecommerce-product/internal/model"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/storage/sqlc"
@@ -11,6 +12,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+const CtxTimeout = time.Second * 5
 
 type ProductService struct {
 	q  *sqlc.Queries
@@ -74,6 +77,9 @@ func (s *ProductService) insertCategorProduct(ctx context.Context, qtx *sqlc.Que
 }
 
 func (s *ProductService) CreateProduct(ctx context.Context, payload *model.ProductPayload) error {
+	ctx, cancel := context.WithTimeout(ctx, CtxTimeout)
+	defer cancel()
+
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -105,4 +111,129 @@ func (s *ProductService) CreateProduct(ctx context.Context, payload *model.Produ
 	}
 
 	return nil
+}
+
+func (s *ProductService) UpdateProduct(ctx context.Context, payload *model.ProductUpdatePayload) (*model.ProductUpdateResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, CtxTimeout)
+	defer cancel()
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.q.WithTx(tx)
+
+	resp, err := qtx.GetProduct(ctx, payload.ProductID)
+	if err != nil {
+		return nil, err
+	}
+
+	var prod sqlc.UpdateProductParams
+
+	if payload.Name != nil {
+		prod.Name = *payload.Name
+	} else {
+		prod.Name = resp.Name
+	}
+
+	if payload.Description != nil {
+		prod.Description = pgtype.Text{
+			String: *payload.Description,
+			Valid:  true,
+		}
+	} else {
+		prod.Description = resp.Description
+	}
+
+	if payload.Price != nil {
+		priceStr := fmt.Sprintf("%.2f", *payload.Price)
+		priceNumeric := pgtype.Numeric{}
+		if err := priceNumeric.Scan(priceStr); err != nil {
+			return nil, err
+		}
+		prod.Price = priceNumeric
+	} else {
+		prod.Price = resp.Price
+	}
+
+	prod.ID = payload.ProductID
+
+	newProd, err := qtx.UpdateProduct(ctx, prod)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	priceFloat, _ := newProd.Price.Float64Value()
+	return &model.ProductUpdateResponse{
+		Name:        newProd.Name,
+		Description: newProd.Description.String,
+		Price:       float32(priceFloat.Float64),
+		UpdateAt:    newProd.UpdatedAt.Time,
+	}, nil
+}
+
+func (s *ProductService) UpdateVariant(ctx context.Context, payload *model.VariantsUpdatePayload) (*model.VariantUpdateResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, CtxTimeout)
+	defer cancel()
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.q.WithTx(tx)
+
+	resp, err := qtx.GetVariantByID(ctx, sqlc.GetVariantByIDParams{
+		ID:        payload.VariantID,
+		ProductID: payload.ProductID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var vars sqlc.UpdateProductVariantParams
+
+	if payload.Color != nil {
+		vars.Color = *payload.Color
+	} else {
+		vars.Color = resp.Color
+	}
+
+	if payload.Size != nil {
+		vars.Size = *payload.Size
+	} else {
+		vars.Size = resp.Size
+	}
+
+	if payload.Quantity != nil {
+		vars.Quantity = *payload.Quantity
+	} else {
+		vars.Quantity = resp.Quantity
+	}
+
+	vars.ID = payload.VariantID
+	vars.ProductID = payload.ProductID
+
+	newVars, err := qtx.UpdateProductVariant(ctx, vars)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return &model.VariantUpdateResponse{
+		Color:     newVars.Color,
+		Size:      newVars.Size,
+		Quantity:  newVars.Quantity,
+		UpdatedAt: newVars.UpdatedAt.Time,
+	}, nil
 }
