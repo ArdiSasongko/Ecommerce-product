@@ -30,3 +30,10 @@ func (s *CategoryService) UpdateCategory(ctx context.Context, name string, param
 
 	return resp, nil
 }
+
+func (s *CategoryService) DeleteCategory(ctx context.Context, name string) error {
+	if err := s.q.DeleteCategory(ctx, name); err != nil {
+		return err
+	}
+	return nil
+}

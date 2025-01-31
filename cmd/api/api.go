@@ -45,13 +45,17 @@ func (a *Application) Mount() *fiber.App {
 	v1 := r.Group("/v1")
 
 	product := v1.Group("/products")
-	product.Post("/", a.handler.Middleware.AdminMiddleware(2), a.handler.Product.CreateProduct)
-	product.Patch("/:productID", a.handler.Middleware.AdminMiddleware(2), a.handler.Product.UpdateProduct)
-	product.Patch("/:productID/variants/:variantID", a.handler.Middleware.AdminMiddleware(2), a.handler.Product.UpdateVariant)
+	product.Use(a.handler.Middleware.AdminMiddleware(2))
+	product.Post("/", a.handler.Product.CreateProduct)
+	product.Patch("/:productID", a.handler.Product.UpdateProduct)
+	product.Patch("/:productID/variants/:variantID", a.handler.Product.UpdateVariant)
+	product.Delete("/:productID", a.handler.Product.DeleteProduct)
 
 	category := v1.Group("/category")
-	category.Post("/", a.handler.Middleware.AdminMiddleware(2), a.handler.Category.CreateCategory)
-	category.Put("/:category_name", a.handler.Middleware.AdminMiddleware(2), a.handler.Category.UpdateCategory)
+	category.Use(a.handler.Middleware.AdminMiddleware(2))
+	category.Post("/", a.handler.Category.CreateCategory)
+	category.Put("/:category_name", a.handler.Category.UpdateCategory)
+	category.Delete("/:category_name", a.handler.Category.DeleteCategory)
 	return r
 }
 

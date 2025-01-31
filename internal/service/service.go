@@ -15,10 +15,12 @@ type Service struct {
 		CreateProduct(context.Context, *model.ProductPayload) error
 		UpdateProduct(context.Context, *model.ProductUpdatePayload) (*model.ProductUpdateResponse, error)
 		UpdateVariant(context.Context, *model.VariantsUpdatePayload) (*model.VariantUpdateResponse, error)
+		DeleteProduct(context.Context, int32) error
 	}
 	Category interface {
 		InsertCategory(context.Context, string) error
 		UpdateCategory(context.Context, string, string) (string, error)
+		DeleteCategory(context.Context, string) error
 	}
 }
 

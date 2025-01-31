@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteProductVariant = `-- name: DeleteProductVariant :exec
+DELETE FROM product_variants WHERE id = $1 AND product_id = $2
+`
+
+type DeleteProductVariantParams struct {
+	ID        int32
+	ProductID int32
+}
+
+func (q *Queries) DeleteProductVariant(ctx context.Context, arg DeleteProductVariantParams) error {
+	_, err := q.db.Exec(ctx, deleteProductVariant, arg.ID, arg.ProductID)
+	return err
+}
+
 const getVariantByID = `-- name: GetVariantByID :one
 SELECT id, product_id, color, size, quantity, created_at, updated_at FROM product_variants WHERE id = $1 AND product_id = $2
 `
@@ -33,6 +47,38 @@ func (q *Queries) GetVariantByID(ctx context.Context, arg GetVariantByIDParams) 
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getVariantsByProductID = `-- name: GetVariantsByProductID :many
+SELECT id, product_id, color, size, quantity, created_at, updated_at FROM product_variants WHERE product_id = $1 ORDER BY created_at DESC
+`
+
+func (q *Queries) GetVariantsByProductID(ctx context.Context, productID int32) ([]ProductVariant, error) {
+	rows, err := q.db.Query(ctx, getVariantsByProductID, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductVariant
+	for rows.Next() {
+		var i ProductVariant
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.Color,
+			&i.Size,
+			&i.Quantity,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const insertProductVariant = `-- name: InsertProductVariant :one

@@ -16,10 +16,12 @@ type Handler struct {
 		CreateProduct(*fiber.Ctx) error
 		UpdateProduct(*fiber.Ctx) error
 		UpdateVariant(*fiber.Ctx) error
+		DeleteProduct(*fiber.Ctx) error
 	}
 	Category interface {
 		CreateCategory(*fiber.Ctx) error
 		UpdateCategory(*fiber.Ctx) error
+		DeleteCategory(*fiber.Ctx) error
 	}
 	Middleware interface {
 		AdminMiddleware(int32) fiber.Handler

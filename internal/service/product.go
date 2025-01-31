@@ -237,3 +237,47 @@ func (s *ProductService) UpdateVariant(ctx context.Context, payload *model.Varia
 		UpdatedAt: newVars.UpdatedAt.Time,
 	}, nil
 }
+
+func (s *ProductService) deleteVariants(ctx context.Context, qtx *sqlc.Queries, productId, id int32) error {
+	if err := qtx.DeleteProductVariant(ctx, sqlc.DeleteProductVariantParams{
+		ProductID: productId,
+		ID:        id,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ProductService) DeleteProduct(ctx context.Context, id int32) error {
+	ctx, cancel := context.WithTimeout(ctx, CtxTimeout)
+	defer cancel()
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.q.WithTx(tx)
+	resp, err := qtx.GetVariantsByProductID(ctx, id)
+	if err != nil {
+		return nil
+	}
+
+	for _, res := range resp {
+		if err := s.deleteVariants(ctx, qtx, id, res.ID); err != nil {
+			return err
+		}
+	}
+
+	if err := qtx.DeleteProduct(ctx, id); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}

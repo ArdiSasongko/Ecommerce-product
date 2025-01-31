@@ -6,3 +6,9 @@ UPDATE product_variants SET color = $1, size = $2, quantity = $3, updated_at = N
 
 -- name: GetVariantByID :one
 SELECT id, product_id, color, size, quantity, created_at, updated_at FROM product_variants WHERE id = $1 AND product_id = $2;
+
+-- name: GetVariantsByProductID :many
+SELECT id, product_id, color, size, quantity, created_at, updated_at FROM product_variants WHERE product_id = $1 ORDER BY created_at DESC;
+
+-- name: DeleteProductVariant :exec
+DELETE FROM product_variants WHERE id = $1 AND product_id = $2;

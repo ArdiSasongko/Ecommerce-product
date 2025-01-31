@@ -75,8 +75,29 @@ func (h *CategoryHandler) UpdateCategory(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "ok",
 		"data":    resp,
+	})
+}
+
+func (h *CategoryHandler) DeleteCategory(ctx *fiber.Ctx) error {
+	name := ctx.Params("category_name")
+	categoryName, err := url.PathUnescape(name)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if err := h.service.Category.DeleteCategory(ctx.Context(), categoryName); err != nil {
+		log.WithError(fiber.ErrInternalServerError).Error("error :%w", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "ok",
 	})
 }
