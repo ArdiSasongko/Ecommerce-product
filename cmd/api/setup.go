@@ -9,7 +9,6 @@ import (
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/pg"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/config/rd"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/handler"
-	"github.com/ArdiSasongko/Ecommerce-product/internal/storage/cache"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -71,11 +70,9 @@ func SetupHTTPApplication() (*Application, error) {
 
 	// connected redis
 	rd := rd.NewRedis(cfg.redis.addr)
-	redis := cache.NewRedisCache(rd)
-	cfg.log.Info(redis)
 
 	auth := auth.NewJWT(cfg.auth.secret, cfg.auth.aud, cfg.auth.iss)
-	handler := handler.NewHandler(Conn, auth)
+	handler := handler.NewHandler(Conn, auth, rd)
 	return &Application{
 		config:  cfg,
 		handler: handler,

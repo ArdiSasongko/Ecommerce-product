@@ -6,6 +6,7 @@ import (
 	"github.com/ArdiSasongko/Ecommerce-product/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 type Handler struct {
@@ -22,14 +23,15 @@ type Handler struct {
 		CreateCategory(*fiber.Ctx) error
 		UpdateCategory(*fiber.Ctx) error
 		DeleteCategory(*fiber.Ctx) error
+		GetCategories(*fiber.Ctx) error
 	}
 	Middleware interface {
 		AdminMiddleware(int32) fiber.Handler
 	}
 }
 
-func NewHandler(db *pgxpool.Pool, auth auth.JWTAuth) Handler {
-	service := service.NewService(db, auth)
+func NewHandler(db *pgxpool.Pool, auth auth.JWTAuth, cache *redis.Client) Handler {
+	service := service.NewService(db, auth, cache)
 	external := external.NewExternal()
 	return Handler{
 		Health: &HealthHandler{},
