@@ -51,6 +51,7 @@ func (a *Application) Mount() *fiber.App {
 
 	category := v1.Group("/category")
 	category.Post("/", a.handler.Middleware.AdminMiddleware(2), a.handler.Category.CreateCategory)
+	category.Put("/:category_name", a.handler.Middleware.AdminMiddleware(2), a.handler.Category.UpdateCategory)
 	return r
 }
 

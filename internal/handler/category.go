@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"net/url"
+
 	"github.com/ArdiSasongko/Ecommerce-product/internal/model"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/service"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/utils"
@@ -38,5 +40,43 @@ func (h *CategoryHandler) CreateCategory(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "ok",
+	})
+}
+
+func (h *CategoryHandler) UpdateCategory(ctx *fiber.Ctx) error {
+	payload := new(model.CategoryPayload)
+	name := ctx.Params("category_name")
+	categoryName, err := url.PathUnescape(name)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if err := ctx.BodyParser(payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if err := payload.Validate(); err != nil {
+		errs := utils.ValidationError(err.(validator.ValidationErrors))
+		log.WithError(fiber.ErrBadRequest).Error("validate error :%w", errs)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": errs,
+		})
+	}
+
+	resp, err := h.service.Category.UpdateCategory(ctx.Context(), payload.Name, categoryName)
+	if err != nil {
+		log.WithError(fiber.ErrInternalServerError).Error("error :%w", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "ok",
+		"data":    resp,
 	})
 }

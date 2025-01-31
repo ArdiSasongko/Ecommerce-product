@@ -18,6 +18,7 @@ type Service struct {
 	}
 	Category interface {
 		InsertCategory(context.Context, string) error
+		UpdateCategory(context.Context, string, string) (string, error)
 	}
 }
 

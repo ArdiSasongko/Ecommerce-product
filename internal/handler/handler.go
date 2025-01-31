@@ -19,6 +19,7 @@ type Handler struct {
 	}
 	Category interface {
 		CreateCategory(*fiber.Ctx) error
+		UpdateCategory(*fiber.Ctx) error
 	}
 	Middleware interface {
 		AdminMiddleware(int32) fiber.Handler
