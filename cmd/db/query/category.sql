@@ -12,3 +12,6 @@ UPDATE categories SET name = $1 WHERE name = $2 RETURNING name;
 
 -- name: GetCategories :many
 SELECT id, name, created_at FROM categories;
+
+-- name: CountCategories :one
+SELECT COUNT(id) FROM categories;

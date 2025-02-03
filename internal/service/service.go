@@ -23,7 +23,7 @@ type Service struct {
 		InsertCategory(context.Context, string) error
 		UpdateCategory(context.Context, string, string) (string, error)
 		DeleteCategory(context.Context, string) error
-		GetCategory(context.Context) ([]model.CategoryResponse, error)
+		GetCategories(ctx context.Context, params model.PaginatinParams) (*model.CategoryWithPaginationResponse, error)
 	}
 }
 

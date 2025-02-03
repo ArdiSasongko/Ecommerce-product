@@ -42,7 +42,7 @@ func (s *CategoryService) DeleteCategory(ctx context.Context, name string) error
 	return nil
 }
 
-func (s *CategoryService) GetCategory(ctx context.Context) ([]model.CategoryResponse, error) {
+func (s *CategoryService) getCategoriesWithPagination(ctx context.Context, params model.PaginatinParams) ([]model.CategoryResponse, error) {
 	getRedis, err := s.c.Category.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (s *CategoryService) GetCategory(ctx context.Context) ([]model.CategoryResp
 
 	if getRedis != nil {
 		log.Println("get from redis")
-		return getRedis, nil
+		return ApplyPaginationCategoris(getRedis, params), nil
 	}
 
 	categories, err := s.q.GetCategories(ctx)
@@ -74,5 +74,30 @@ func (s *CategoryService) GetCategory(ctx context.Context) ([]model.CategoryResp
 		log.Printf("failed to set data in Redis: %v\n", err)
 	}
 
-	return resps, nil
+	return ApplyPaginationCategoris(resps, params), nil
+}
+
+func (s *CategoryService) GetCategories(ctx context.Context, params model.PaginatinParams) (*model.CategoryWithPaginationResponse, error) {
+	data, err := s.getCategoriesWithPagination(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	totalCount := 0
+	if getRedis, err := s.c.Category.Get(ctx); err == nil && getRedis != nil {
+		totalCount = len(getRedis)
+	} else {
+		count, err := s.q.CountCategories(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = int(count)
+	}
+
+	return &model.CategoryWithPaginationResponse{
+		Data:       data,
+		TotalCount: totalCount,
+		Offset:     params.Offset,
+		Limit:      params.Limit,
+	}, nil
 }

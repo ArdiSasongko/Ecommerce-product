@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/url"
+	"strconv"
 
 	"github.com/ArdiSasongko/Ecommerce-product/internal/model"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/service"
@@ -102,8 +103,40 @@ func (h *CategoryHandler) DeleteCategory(ctx *fiber.Ctx) error {
 	})
 }
 
+const (
+	defaultLimit = 5
+	maxLimit     = 100
+	minOffset    = 0
+)
+
 func (h *CategoryHandler) GetCategories(ctx *fiber.Ctx) error {
-	resp, err := h.service.Category.GetCategory(ctx.Context())
+	limit, err := strconv.Atoi(ctx.Query("limit", strconv.Itoa(defaultLimit)))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if limit <= 0 {
+		limit = defaultLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	offset, err := strconv.Atoi(ctx.Query("offset", "0"))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	params := model.PaginatinParams{
+		Offset: offset,
+		Limit:  limit,
+	}
+
+	resp, err := h.service.Category.GetCategories(ctx.Context(), params)
 	if err != nil {
 		log.WithError(fiber.ErrInternalServerError).Error("error :%w", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
