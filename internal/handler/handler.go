@@ -9,6 +9,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const (
+	defaultLimit = 5
+	maxLimit     = 100
+	minOffset    = 0
+)
+
 type Handler struct {
 	Health interface {
 		Check(*fiber.Ctx) error
@@ -18,6 +24,8 @@ type Handler struct {
 		UpdateProduct(*fiber.Ctx) error
 		UpdateVariant(*fiber.Ctx) error
 		DeleteProduct(*fiber.Ctx) error
+		GetProducts(*fiber.Ctx) error
+		GetProduct(*fiber.Ctx) error
 	}
 	Category interface {
 		CreateCategory(*fiber.Ctx) error

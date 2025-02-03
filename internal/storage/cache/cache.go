@@ -15,7 +15,10 @@ const (
 )
 
 type RedisCache struct {
-	Product  interface{}
+	Product interface {
+		SetProducts(context.Context, []model.ProductsResponse) error
+		GetProducts(context.Context) ([]model.ProductsResponse, error)
+	}
 	Category interface {
 		Set(context.Context, []model.CategoryResponse) error
 		Get(context.Context) ([]model.CategoryResponse, error)

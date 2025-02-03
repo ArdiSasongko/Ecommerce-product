@@ -9,3 +9,19 @@ SELECT id, name, description, price, created_at, updated_at FROM products WHERE 
 
 -- name: DeleteProduct :exec
 DELETE FROM products WHERE id = $1;
+
+-- name: ListProducts :many
+SELECT id, name, description, price, created_at, updated_at FROM products ORDER BY created_at DESC;
+
+-- name: CountProducts :one
+SELECT COUNT(id) FROM products;
+
+-- name: GetProductDetails :one
+SELECT
+    p.*,
+    ARRAY_AGG(c.name) AS categories
+FROM products p
+LEFT JOIN product_categories pc ON p.id = pc.product_id
+LEFT JOIN categories c ON pc.category_id = c.id
+WHERE p.id = $1
+GROUP BY p.id;

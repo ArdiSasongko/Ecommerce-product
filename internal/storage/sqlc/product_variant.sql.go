@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countVariantsByProductID = `-- name: CountVariantsByProductID :one
+SELECT COUNT(id) FROM product_variants WHERE product_id = $1
+`
+
+func (q *Queries) CountVariantsByProductID(ctx context.Context, productID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, countVariantsByProductID, productID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteProductVariant = `-- name: DeleteProductVariant :exec
 DELETE FROM product_variants WHERE id = $1 AND product_id = $2
 `

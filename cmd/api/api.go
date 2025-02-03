@@ -45,6 +45,9 @@ func (a *Application) Mount() *fiber.App {
 	v1 := r.Group("/v1")
 
 	product := v1.Group("/products")
+	product.Get("/", a.handler.Product.GetProducts)
+	product.Get("/:productID", a.handler.Product.GetProduct)
+
 	product.Use(a.handler.Middleware.AdminMiddleware(2))
 	product.Post("/", a.handler.Product.CreateProduct)
 	product.Patch("/:productID", a.handler.Product.UpdateProduct)
@@ -53,6 +56,7 @@ func (a *Application) Mount() *fiber.App {
 
 	category := v1.Group("/categories")
 	category.Get("/", a.handler.Category.GetCategories)
+
 	category.Use(a.handler.Middleware.AdminMiddleware(2))
 	category.Post("/", a.handler.Category.CreateCategory)
 	category.Put("/:category_name", a.handler.Category.UpdateCategory)

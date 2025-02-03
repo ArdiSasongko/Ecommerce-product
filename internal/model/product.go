@@ -74,4 +74,29 @@ type (
 		Quantity  int32     `json:"quantity"`
 		UpdatedAt time.Time `json:"updated_at"`
 	}
+
+	ProductsResponse struct {
+		Name            string    `json:"name"`
+		Description     string    `json:"description"`
+		Price           float32   `json:"price"`
+		AmmountVariants int       `json:"amount_variants"`
+		CreatedAt       time.Time `json:"created_at"`
+	}
+
+	ProductResponse struct {
+		ID          int32             `json:"id"`
+		Name        string            `json:"name"`
+		Description string            `json:"description"`
+		Price       float32           `json:"price"`
+		CreatedAt   time.Time         `json:"created_at"`
+		UpdatedAt   time.Time         `json:"updated_at"`
+		Categories  interface{}       `json:"categories"`
+		Variants    []VariantResponse `json:"variants"`
+	}
+
+	VariantResponse struct {
+		Color    string `json:"color"`
+		Size     string `json:"size"`
+		Quantity int32  `json:"quantity"`
+	}
 )
