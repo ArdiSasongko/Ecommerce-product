@@ -95,7 +95,7 @@ func (s *CategoryService) GetCategories(ctx context.Context, params model.Pagina
 	}
 
 	return &model.CategoryWithPaginationResponse{
-		Data:       data,
+		Categories: data,
 		TotalCount: totalCount,
 		Offset:     params.Offset,
 		Limit:      params.Limit,

@@ -160,3 +160,68 @@ func (h *ProductHandler) DeleteProduct(ctx *fiber.Ctx) error {
 		"message": "ok",
 	})
 }
+
+func (h *ProductHandler) GetProducts(ctx *fiber.Ctx) error {
+	limit, err := strconv.Atoi(ctx.Query("limit", strconv.Itoa(defaultLimit)))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if limit <= 0 {
+		limit = defaultLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	offset, err := strconv.Atoi(ctx.Query("offset", "0"))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	params := model.PaginatinParams{
+		Offset: offset,
+		Limit:  limit,
+	}
+
+	resp, err := h.service.Product.GetProducts(ctx.Context(), params)
+	if err != nil {
+		log.WithError(fiber.ErrInternalServerError).Error("error :%w", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "ok",
+		"data":    resp,
+	})
+}
+
+func (h *ProductHandler) GetProduct(ctx *fiber.Ctx) error {
+	id := ctx.Params("productID")
+	productID, err := strconv.Atoi(id)
+	if err != nil {
+		log.WithError(fiber.ErrBadRequest).Error("parsing error :%w", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	resp, err := h.service.Product.GetProduct(ctx.Context(), int32(productID))
+	if err != nil {
+		log.WithError(fiber.ErrInternalServerError).Error("error :%w", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "ok",
+		"data":    resp,
+	})
+}

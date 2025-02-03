@@ -12,3 +12,6 @@ SELECT id, product_id, color, size, quantity, created_at, updated_at FROM produc
 
 -- name: DeleteProductVariant :exec
 DELETE FROM product_variants WHERE id = $1 AND product_id = $2;
+
+-- name: CountVariantsByProductID :one
+SELECT COUNT(id) FROM product_variants WHERE product_id = $1;

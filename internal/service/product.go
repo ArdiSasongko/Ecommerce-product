@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/ArdiSasongko/Ecommerce-product/internal/model"
+	"github.com/ArdiSasongko/Ecommerce-product/internal/storage/cache"
 	"github.com/ArdiSasongko/Ecommerce-product/internal/storage/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -18,6 +20,7 @@ const CtxTimeout = time.Second * 5
 type ProductService struct {
 	q  *sqlc.Queries
 	db *pgxpool.Pool
+	c  cache.RedisCache
 }
 
 func (s *ProductService) insertProduct(ctx context.Context, qtx *sqlc.Queries, payload *model.ProductPayload) (int32, error) {
@@ -280,4 +283,108 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id int32) error {
 	}
 
 	return nil
+}
+
+func (s *ProductService) getProductsWithPagination(ctx context.Context, params model.PaginatinParams) ([]model.ProductsResponse, error) {
+	getRedis, err := s.c.Product.GetProducts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if getRedis != nil {
+		log.Println("get from redis")
+		return ApplyPaginationProducts(getRedis, params), nil
+	}
+
+	products, err := s.q.ListProducts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var resps []model.ProductsResponse
+	for _, product := range products {
+		priceFloat, _ := product.Price.Float64Value()
+		count, err := s.q.CountVariantsByProductID(ctx, product.ID)
+		if err != nil {
+			return nil, err
+		}
+		resp := model.ProductsResponse{
+			Name:            product.Name,
+			Description:     product.Description.String,
+			Price:           float32(priceFloat.Float64),
+			AmmountVariants: int(count),
+			CreatedAt:       product.CreatedAt.Time,
+		}
+
+		resps = append(resps, resp)
+	}
+
+	log.Println("get from db")
+
+	if err := s.c.Product.SetProducts(ctx, resps); err != nil {
+		return nil, err
+	}
+
+	return ApplyPaginationProducts(resps, params), nil
+}
+
+func (s *ProductService) GetProducts(ctx context.Context, params model.PaginatinParams) (*model.ProductsWithPaginationResponse, error) {
+	data, err := s.getProductsWithPagination(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	totalCount := 0
+	if getRedis, err := s.c.Product.GetProducts(ctx); err == nil && getRedis != nil {
+		totalCount = len(getRedis)
+	} else {
+		count, err := s.q.CountProducts(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = int(count)
+	}
+
+	return &model.ProductsWithPaginationResponse{
+		Products:   data,
+		TotalCount: totalCount,
+		Limit:      params.Limit,
+		Offset:     params.Offset,
+	}, nil
+}
+
+func (s *ProductService) GetProduct(ctx context.Context, id int32) (*model.ProductResponse, error) {
+	product, err := s.q.GetProductDetails(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	priceFloat, _ := product.Price.Float64Value()
+	var variants []model.VariantResponse
+
+	variantsResp, err := s.q.GetVariantsByProductID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, variant := range variantsResp {
+		variants = append(variants, model.VariantResponse{
+			Color:    variant.Color,
+			Quantity: variant.Quantity,
+			Size:     variant.Size,
+		})
+	}
+
+	resp := model.ProductResponse{
+		ID:          product.ID,
+		Name:        product.Name,
+		Description: product.Description.String,
+		Price:       float32(priceFloat.Float64),
+		CreatedAt:   product.CreatedAt.Time,
+		UpdatedAt:   product.UpdatedAt.Time,
+		Categories:  product.Categories,
+		Variants:    variants,
+	}
+
+	return &resp, nil
 }

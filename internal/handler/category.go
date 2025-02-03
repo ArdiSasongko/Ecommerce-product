@@ -103,12 +103,6 @@ func (h *CategoryHandler) DeleteCategory(ctx *fiber.Ctx) error {
 	})
 }
 
-const (
-	defaultLimit = 5
-	maxLimit     = 100
-	minOffset    = 0
-)
-
 func (h *CategoryHandler) GetCategories(ctx *fiber.Ctx) error {
 	limit, err := strconv.Atoi(ctx.Query("limit", strconv.Itoa(defaultLimit)))
 	if err != nil {

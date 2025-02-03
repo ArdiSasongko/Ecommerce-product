@@ -18,12 +18,14 @@ type Service struct {
 		UpdateProduct(context.Context, *model.ProductUpdatePayload) (*model.ProductUpdateResponse, error)
 		UpdateVariant(context.Context, *model.VariantsUpdatePayload) (*model.VariantUpdateResponse, error)
 		DeleteProduct(context.Context, int32) error
+		GetProducts(context.Context, model.PaginatinParams) (*model.ProductsWithPaginationResponse, error)
+		GetProduct(context.Context, int32) (*model.ProductResponse, error)
 	}
 	Category interface {
 		InsertCategory(context.Context, string) error
 		UpdateCategory(context.Context, string, string) (string, error)
 		DeleteCategory(context.Context, string) error
-		GetCategories(ctx context.Context, params model.PaginatinParams) (*model.CategoryWithPaginationResponse, error)
+		GetCategories(context.Context, model.PaginatinParams) (*model.CategoryWithPaginationResponse, error)
 	}
 }
 
@@ -34,6 +36,7 @@ func NewService(db *pgxpool.Pool, auth auth.JWTAuth, rd *redis.Client) Service {
 		Product: &ProductService{
 			q:  q,
 			db: db,
+			c:  cache,
 		},
 		Category: &CategoryService{
 			q: q,
